@@ -34,6 +34,14 @@ def get_locale():
     return request.accept_languages.best_match(app.config['LANGUAGES'])
 
 
+# 🔥 Inject gettext into Jinja templates
+@app.context_processor
+def inject_gettext():
+    """Inject the gettext function as _ into Jinja2 templates"""
+    from flask_babel import gettext
+    return dict(_=gettext)
+
+
 @app.route('/', methods=['GET'], strict_slashes=False)
 def home():
     """Home page for your application"""
