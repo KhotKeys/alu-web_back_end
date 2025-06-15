@@ -25,30 +25,43 @@ app.config.from_object(Config)
 babel = Babel(app)
 
 
+# Fake translation data
+translations = {
+    'en': {
+        'home_title': 'Welcome to Holberton',
+        'home_header': 'Hello world!',
+        'logged_in_as': 'You are logged in as %(username)s.',
+        'not_logged_in': 'You are not logged in.',
+    },
+    'fr': {
+        'home_title': 'Bienvenue chez Holberton',
+        'home_header': 'Bonjour monde!',
+        'logged_in_as': 'Vous êtes connecté en tant que %(username)s.',
+        'not_logged_in': 'Vous n\'êtes pas connecté.',
+    }
+}
+
+
 @babel.localeselector
 def get_locale():
     """Get locale for your application"""
     locale = request.args.get('locale')
     if locale and locale in app.config['LANGUAGES']:
         return locale
+    user = g.get('user')
+    if user and user.get("locale") in app.config['LANGUAGES']:
+        return user.get("locale")
     return request.accept_languages.best_match(app.config['LANGUAGES'])
 
 
-# 🔥 Inject gettext into Jinja templates
 @app.context_processor
 def inject_gettext():
-    """Inject the gettext function as _ into Jinja2 templates"""
-    from flask_babel import gettext
-    return dict(_=gettext)
-
-
-@app.route('/', methods=['GET'], strict_slashes=False)
-def home():
-    """Home page for your application"""
-    login = False
-    if g.get('user'):
-        login = True
-    return render_template('5-index.html', login=login)
+    """Inject a fake _ function for template translation"""
+    def fake_gettext(key, **kwargs):
+        lang = get_locale()
+        value = translations.get(lang, {}).get(key, key)
+        return value % kwargs if kwargs else value
+    return dict(_=fake_gettext)
 
 
 def get_user():
@@ -63,10 +76,13 @@ def get_user():
 @app.before_request
 def before_request():
     """Before request"""
-    user = get_user()
-    print(user)
-    if user:
-        g.user = user
+    g.user = get_user()
+
+
+@app.route('/', methods=['GET'], strict_slashes=False)
+def home():
+    """Home page for your application"""
+    return render_template('5-index.html', login=g.user is not None)
 
 
 if __name__ == "__main__":
