@@ -2,7 +2,7 @@
 """Basic Flask app that implements i18n and internationalization"""
 
 from flask import Flask, render_template, request, g
-from flask_babel import Babel
+from flask_babel import Babel, gettext as _
 
 app = Flask(__name__)
 
@@ -32,18 +32,15 @@ def get_locale():
     if locale and locale in app.config['LANGUAGES']:
         return locale
     user = g.get('user')
-    if (user and user.get("locale", None)
-            and user["locale"] in app.config['LANGUAGES']):
-        return g.user["locale"]
+    if user and user.get("locale") in app.config['LANGUAGES']:
+        return user["locale"]
     return request.accept_languages.best_match(app.config['LANGUAGES'])
 
 
 @app.route('/', methods=['GET'], strict_slashes=False)
 def home():
     """Home page for your application"""
-    login = False
-    if g.get('user'):
-        login = True
+    login = bool(g.get('user'))
     return render_template('6-index.html', login=login)
 
 
@@ -51,7 +48,7 @@ def get_user():
     """Get user information from users dict"""
     try:
         login_as = int(request.args.get('login_as'))
-        return users.get(int(login_as))
+        return users.get(login_as)
     except Exception:
         return None
 
@@ -60,9 +57,13 @@ def get_user():
 def before_request():
     """Before request"""
     user = get_user()
-    print(user)
-    if user:
-        g.user = user
+    g.user = user  # Always assign, even if None
+
+
+# Expose _() in templates
+@app.context_processor
+def inject_gettext():
+    return dict(_=_)
 
 
 if __name__ == "__main__":
