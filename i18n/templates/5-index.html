@@ -2,14 +2,14 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8" />
-    <title>{{_('home_title')}}</title>
+    <title>Bienvenue chez Holberton</title>
 </head>
 <body>
-<h1>{{_('home_header')}}</h1>
+<h1>Bonjour monde!</h1>
 {% if login %}
-<p>{{ _('logged_in_as', username=g.user['name']) }}</p>
+<p>Vous êtes connecté en tant que {{ g.user['name'] }}.</p>
 {% else %}
-<p>{{ _('not_logged_in') }}</p>
+<p>Vous n'êtes pas connecté.</p>
 {% endif %}
 </body>
 </html>
