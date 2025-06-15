@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 ''' Flask app '''
 
-from flask import Flask, render_template # type: ignore
+from flask import Flask, render_template 
+
+# type: ignore
 app = Flask(__name__)
 
 
