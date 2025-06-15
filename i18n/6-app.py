@@ -54,6 +54,7 @@ def get_locale():
 
 @app.context_processor
 def inject_gettext():
+    """Injects a fake translation function into the template context"""
     def fake_gettext(key, **kwargs):
         lang = get_locale()
         value = translations.get(lang, {}).get(key, key)
