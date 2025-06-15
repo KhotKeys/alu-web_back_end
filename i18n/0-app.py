@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 ''' Flask app '''
 
-from flask import Flask, render_template 
+from flask import Flask, render_template
 
 # type: ignore
 app = Flask(__name__)
@@ -15,3 +15,4 @@ def hello_world():
 
 if __name__ == '__main__':
     app.run()
+
