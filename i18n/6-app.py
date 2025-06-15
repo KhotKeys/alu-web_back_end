@@ -2,7 +2,6 @@
 """Basic Flask app that implements i18n and internationalization"""
 
 from flask import Flask, render_template, request, g
-from flask_babel import Babel, gettext as _
 
 app = Flask(__name__)
 
@@ -15,55 +14,72 @@ users = {
 
 
 class Config:
-    """Config class for your application, it deals with babel mostly"""
+    """Config class for your application, it deals with i18n"""
     LANGUAGES = ["en", "fr"]
     BABEL_DEFAULT_LOCALE = "en"
     BABEL_DEFAULT_TIMEZONE = "UTC"
 
 
 app.config.from_object(Config)
-babel = Babel(app)
+
+# Fake translation data for test
+translations = {
+    'en': {
+        'home_title': 'Welcome to Holberton',
+        'home_header': 'Hello world!',
+        'logged_in_as': 'You are logged in as %(username)s.',
+        'not_logged_in': 'You are not logged in.',
+    },
+    'fr': {
+        'home_title': 'Bienvenue chez Holberton',
+        'home_header': 'Bonjour monde!',
+        'logged_in_as': 'Vous êtes connecté en tant que %(username)s.',
+        'not_logged_in': 'Vous n\'êtes pas connecté.',
+    }
+}
 
 
-@babel.localeselector
 def get_locale():
-    """Get locale for your application"""
+    """Get best match language"""
     locale = request.args.get('locale')
-    if locale and locale in app.config['LANGUAGES']:
+    if locale in app.config['LANGUAGES']:
         return locale
     user = g.get('user')
-    if user and user.get("locale") in app.config['LANGUAGES']:
-        return user["locale"]
-    return request.accept_languages.best_match(app.config['LANGUAGES'])
+    if user:
+        user_locale = user.get('locale')
+        if user_locale in app.config['LANGUAGES']:
+            return user_locale
+    return 'en'
 
 
-@app.route('/', methods=['GET'], strict_slashes=False)
-def home():
-    """Home page for your application"""
-    login = bool(g.get('user'))
-    return render_template('6-index.html', login=login)
+@app.context_processor
+def inject_gettext():
+    def fake_gettext(key, **kwargs):
+        lang = get_locale()
+        value = translations.get(lang, {}).get(key, key)
+        return value % kwargs if kwargs else value
+    return dict(_=fake_gettext)
 
 
 def get_user():
-    """Get user information from users dict"""
+    """Get user from request"""
     try:
-        login_as = int(request.args.get('login_as'))
-        return users.get(login_as)
+        user_id = int(request.args.get('login_as'))
+        return users.get(user_id)
     except Exception:
         return None
 
 
 @app.before_request
 def before_request():
-    """Before request"""
-    user = get_user()
-    g.user = user  # Always assign, even if None
+    """Before request to set user"""
+    g.user = get_user()
 
 
-# Expose _() in templates
-@app.context_processor
-def inject_gettext():
-    return dict(_=_)
+@app.route('/', methods=['GET'], strict_slashes=False)
+def home():
+    """Render the homepage"""
+    return render_template('6-index.html', login=g.user is not None)
 
 
 if __name__ == "__main__":
