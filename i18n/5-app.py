@@ -6,6 +6,7 @@ from flask_babel import Babel
 
 app = Flask(__name__)
 
+# User dictionary
 users = {
     1: {"name": "Balou", "locale": "fr", "timezone": "Europe/Paris"},
     2: {"name": "Beyonce", "locale": "en", "timezone": "US/Central"},
@@ -15,7 +16,7 @@ users = {
 
 
 class Config:
-    """Config class for your application, it deals with babel mostly"""
+    """Configuration for Babel"""
     LANGUAGES = ["en", "fr"]
     BABEL_DEFAULT_LOCALE = "en"
     BABEL_DEFAULT_TIMEZONE = "UTC"
@@ -24,8 +25,7 @@ class Config:
 app.config.from_object(Config)
 babel = Babel(app)
 
-
-# Fake translation data
+# Fake translation strings expected by the test
 translations = {
     'en': {
         'home_title': 'Welcome to Holberton',
@@ -42,21 +42,39 @@ translations = {
 }
 
 
+def get_user():
+    """Get user from query string if present"""
+    try:
+        user_id = int(request.args.get("login_as"))
+        return users.get(user_id)
+    except Exception:
+        return None
+
+
+@app.before_request
+def before_request():
+    """Set g.user before handling request"""
+    g.user = get_user()
+
+
 @babel.localeselector
 def get_locale():
-    """Get locale for your application"""
-    locale = request.args.get('locale')
-    if locale and locale in app.config['LANGUAGES']:
-        return locale
-    user = g.get('user')
-    if user and user.get("locale") in app.config['LANGUAGES']:
-        return user.get("locale")
-    return request.accept_languages.best_match(app.config['LANGUAGES'])
+    """Determine best-matching language"""
+    # 1. From query string
+    if request.args.get('locale') in app.config['LANGUAGES']:
+        return request.args.get('locale')
+    # 2. From user
+    if g.get('user'):
+        user_locale = g.user.get("locale")
+        if user_locale in app.config["LANGUAGES"]:
+            return user_locale
+    # 3. From request headers
+    return request.accept_languages.best_match(app.config["LANGUAGES"])
 
 
 @app.context_processor
 def inject_gettext():
-    """Inject a fake _ function for template translation"""
+    """Fake translation function for templates"""
     def fake_gettext(key, **kwargs):
         lang = get_locale()
         value = translations.get(lang, {}).get(key, key)
@@ -64,26 +82,7 @@ def inject_gettext():
     return dict(_=fake_gettext)
 
 
-def get_user():
-    """Get user information from users dict"""
-    try:
-        login_as = int(request.args.get('login_as'))
-        return users.get(int(login_as))
-    except Exception:
-        return None
-
-
-@app.before_request
-def before_request():
-    """Before request"""
-    g.user = get_user()
-
-
-@app.route('/', methods=['GET'], strict_slashes=False)
+@app.route("/", methods=["GET"], strict_slashes=False)
 def home():
-    """Home page for your application"""
-    return render_template('5-index.html', login=g.user is not None)
-
-
-if __name__ == "__main__":
-    app.run()
+    """Render home page"""
+    return render_template("5-index.html", login=g.user is not None)
