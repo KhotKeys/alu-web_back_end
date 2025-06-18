@@ -1,11 +1,12 @@
+-- Stored procedure to compute and update average weighted scores for all users
+
 DELIMITER //
 
 CREATE PROCEDURE ComputeAverageWeightedScoreForUsers()
 BEGIN
     DECLARE done INT DEFAULT 0;
     DECLARE uid INT;
-    
-    -- Cursor to loop through all user IDs
+
     DECLARE user_cursor CURSOR FOR SELECT id FROM users;
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
 
@@ -35,14 +36,13 @@ BEGIN
         WHERE
             c.user_id = uid;
 
-        -- Prevent division by zero
+        -- Compute average and update
         IF total_weight > 0 THEN
             SET avg_weighted_score = total_weighted_score / total_weight;
         ELSE
             SET avg_weighted_score = 0;
         END IF;
 
-        -- Update the user's average_score
         UPDATE users
         SET average_score = avg_weighted_score
         WHERE id = uid;
