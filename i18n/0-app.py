@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 ''' Flask app '''
 
+<<<<<<< HEAD
 from flask import Flask, render_template # type: ignore
+=======
+from flask import Flask, render_template
+
+# type: ignore
+>>>>>>> 889e9ff88310d6b330ededc779a5963988b16478
 app = Flask(__name__)
 
 

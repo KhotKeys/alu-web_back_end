@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """ Redis Cache File """
+<<<<<<< HEAD
 import redis
+=======
+import redis # type: ignore
+>>>>>>> 889e9ff88310d6b330ededc779a5963988b16478
 from typing import Union, Callable, Optional, Any
 from functools import wraps
 from uuid import uuid4
