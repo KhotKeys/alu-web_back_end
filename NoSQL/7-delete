@@ -1,2 +1,45 @@
-// delete item
-db.school.deleteMany({ name: "Holberton school"})
+#!/usr/bin/env python3
+"""Log stats from nginx collection and delete documents from school collection"""
+
+from pymongo import MongoClient
+
+
+def log_stats():
+    """Prints stats about Nginx logs in MongoDB"""
+    client = MongoClient()
+    db = client.logs
+    collection = db.nginx
+
+    # Total logs
+    log_count = collection.count_documents({})
+    print(f"{log_count} logs")
+
+    # Count by method
+    print("Methods:")
+    methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
+    for method in methods:
+        count = collection.count_documents({"method": method})
+        print(f"    method {method}: {count}")
+
+    # Status check: GET /status
+    status_check = collection.count_documents({"method": "GET", "path": "/status"})
+    print(f"{status_check} status check")
+
+
+def delete_school_documents():
+    """Deletes all documents from 'school' collection with name matching 'Holberton school' (case-insensitive)"""
+    client = MongoClient()
+    db = client.school
+    result = db.school.delete_many({
+        "name": {
+            "$regex": "^Holberton school$",
+            "$options": "i"  # case-insensitive
+        }
+    })
+    print(result.raw_result)  # Prints: { "acknowledged" : true, "deletedCount" : X }
+
+
+if __name__ == "__main__":
+    # Call both functions
+    log_stats()
+    delete_school_documents()
